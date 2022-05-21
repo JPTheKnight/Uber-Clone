@@ -6,7 +6,7 @@ import {
   Image,
   TextInput,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import tw from "twrnc";
 import NavOptions from "../components/NavOptions";
 import { Button } from "react-native-elements";
@@ -15,11 +15,27 @@ import { TouchableOpacity } from "react-native-gesture-handler";
 const HomeScreen = () => {
   const [loc, setLoc] = useState([]);
   const [input, setInput] = useState("");
-  const [chosenLoc, setChosenLoc] = useState({});
+  const [chosenLoc, setChosenLoc] = useState(null);
 
   var params = { q: "", format: "json", addressdetails: 1, polygon_geojson: 0 };
-
   const API_LINK = "https://nominatim.openstreetmap.org/search?";
+
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      params.q = input;
+      const query = new URLSearchParams(params).toString();
+      fetch(`${API_LINK}${query}`, {
+        method: "GET",
+        redirect: "follow",
+      })
+        .then((response) => response.text())
+        .then((result) => {
+          setLoc(JSON.parse(result));
+        })
+        .catch((error) => setLoc([{ display_name: "ERROR" }]));
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [input]);
 
   return (
     <SafeAreaView style={tw`h-full`}>
@@ -38,18 +54,6 @@ const HomeScreen = () => {
           style={styles.input}
           onChangeText={(value) => {
             setInput(value);
-            params.q = value;
-            const query = new URLSearchParams(params).toString();
-            fetch(`${API_LINK}${query}`, {
-              method: "GET",
-              redirect: "follow",
-            })
-              .then((response) => response.text())
-              .then((result) => {
-                console.log(JSON.parse(result));
-                setLoc(JSON.parse(result));
-              })
-              .catch((error) => setLoc([{ display_name: "ERROR" }]));
           }}
           value={input}
           placeholder="Where from?"

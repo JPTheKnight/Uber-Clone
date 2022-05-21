@@ -1,5 +1,5 @@
 import { SafeAreaView, StyleSheet, Text, View } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import tw from "twrnc";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
 import { useDispatch } from "react-redux";
@@ -23,6 +23,23 @@ const NavigateCard = () => {
   const dispatch = useDispatch();
   const navigation = useNavigation();
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      params.q = input;
+      const query = new URLSearchParams(params).toString();
+      fetch(`${API_LINK}${query}`, {
+        method: "GET",
+        redirect: "follow",
+      })
+        .then((response) => response.text())
+        .then((result) => {
+          setLoc(JSON.parse(result));
+        })
+        .catch((error) => setLoc([{ display_name: "ERROR" }]));
+    }, 500);
+    return () => clearTimeout(delayDebounceFn);
+  }, [input]);
+
   return (
     <SafeAreaView style={tw`bg-white flex-1`}>
       <Text style={tw`text-center py-5 text-xl`}>Good Morning, JayPeeee!</Text>
@@ -32,18 +49,6 @@ const NavigateCard = () => {
             style={styles.input}
             onChangeText={(value) => {
               setInput(value);
-              params.q = value;
-              const query = new URLSearchParams(params).toString();
-              fetch(`${API_LINK}${query}`, {
-                method: "GET",
-                redirect: "follow",
-              })
-                .then((response) => response.text())
-                .then((result) => {
-                  console.log(JSON.parse(result));
-                  setLoc(JSON.parse(result));
-                })
-                .catch((error) => setLoc([{ display_name: "ERROR" }]));
             }}
             value={input}
             placeholder="Where to?"

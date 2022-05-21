@@ -11,6 +11,7 @@ npm-debug.*
 web-build/
 
 .env
+/SendGit.cmd
 
 # macOS
 .DS_Store
