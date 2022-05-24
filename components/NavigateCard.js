@@ -2,14 +2,22 @@ import { SafeAreaView, StyleSheet, Text, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import tw from "twrnc";
 import { TextInput, TouchableOpacity } from "react-native-gesture-handler";
-import { useDispatch } from "react-redux";
-import { setDestination, setOrigin } from "../slices/navSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectOrigin,
+  setDestination,
+  setOrigin,
+  setTravelTimeInformation,
+} from "../slices/navSlice";
 import { useNavigation } from "@react-navigation/native";
+import NavFavorites from "./NavFavorites";
+import { Icon } from "react-native-elements";
 
 const NavigateCard = () => {
   const [loc, setLoc] = useState([]);
   const [input, setInput] = useState("");
-  const [chosenLoc, setChosenLoc] = useState({});
+
+  const origin = useSelector(selectOrigin);
 
   var params = {
     q: "",
@@ -19,6 +27,7 @@ const NavigateCard = () => {
   };
 
   const API_LINK = "https://nominatim.openstreetmap.org/search?";
+  const API_DURATION_LINK = "http://router.project-osrm.org/table/v1/driving/";
 
   const dispatch = useDispatch();
   const navigation = useNavigation();
@@ -53,14 +62,45 @@ const NavigateCard = () => {
             value={input}
             placeholder="Where to?"
           />
-          {loc.map((item) => {
+          {loc.map((item, index) => {
             return (
               <TouchableOpacity
                 onPress={() => {
                   setLoc([]);
                   setInput(item.display_name);
-                  setChosenLoc(item);
+                  setTimeout(() => {
+                    dispatch(
+                      setDestination({
+                        location: {
+                          lat: item.lat,
+                          lng: item.lon,
+                        },
+                        description: item.display_name,
+                      })
+                    );
+                  }, 1000);
+                  fetch(
+                    `${API_DURATION_LINK}${
+                      origin.location.lat + "," + origin.location.lng
+                    };${item.lat + "," + item.lon}?sources=0`,
+                    {
+                      method: "GET",
+                      redirect: "follow",
+                    }
+                  )
+                    .then((response) => response.text())
+                    .then((result) => {
+                      result = JSON.parse(result);
+                      console.log(result);
+                      dispatch(
+                        setTravelTimeInformation({
+                          duration: result.durations[0][1],
+                        })
+                      );
+                    });
+                  navigation.navigate("RideOptions");
                 }}
+                key={index}
               >
                 <View
                   style={{
@@ -79,33 +119,31 @@ const NavigateCard = () => {
               </TouchableOpacity>
             );
           })}
-          <TouchableOpacity
-            onPress={() => {
-              dispatch(
-                setDestination({
-                  location: { lat: chosenLoc.lat, lng: chosenLoc.lon },
-                  description: loc.display_name,
-                })
-              );
-              navigation.navigate("RideOptions");
-            }}
-            style={{
-              borderWidth: 2,
-              width: 200,
-              borderRadius: 20,
-              height: 50,
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              marginLeft: "auto",
-              marginRight: "auto",
-              marginTop: 20,
-            }}
-            disabled={!loc}
-          >
-            <Text style={{ fontSize: 20 }}>Submit</Text>
-          </TouchableOpacity>
         </View>
+        <NavFavorites />
+      </View>
+      <View
+        style={tw`flex-row bg-white justify-evenly py-2 mt-auto border-t border-gray-300`}
+      >
+        <TouchableOpacity
+          onPress={() => navigation.navigate("RideOptions")}
+          style={tw`flex flex-row bg-black justify-between w-24 px-4 py-3 rounded-full`}
+        >
+          <Icon name="car" type="font-awesome" color="white" size={16} />
+          <Text style={tw`text-white text-center`}>Rides</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={tw`flex flex-row justify-between w-24 px-4 py-3 rounded-full`}
+        >
+          <Icon
+            name="fast-food-outline"
+            type="ionicon"
+            color="black"
+            size={16}
+          />
+          <Text style={tw`text-center`}>Eats</Text>
+        </TouchableOpacity>
       </View>
     </SafeAreaView>
   );
@@ -116,7 +154,6 @@ export default NavigateCard;
 const styles = StyleSheet.create({
   input: {
     height: 40,
-    margin: 12,
     padding: 10,
     backgroundColor: "lightgray",
     borderColor: "transparent",

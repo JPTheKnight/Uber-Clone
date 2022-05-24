@@ -9,8 +9,8 @@ import {
 import React, { useEffect, useState } from "react";
 import tw from "twrnc";
 import NavOptions from "../components/NavOptions";
-import { Button } from "react-native-elements";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import NavFavorites from "../components/NavFavorites";
 
 const HomeScreen = () => {
   const [loc, setLoc] = useState([]);
@@ -31,8 +31,11 @@ const HomeScreen = () => {
         .then((response) => response.text())
         .then((result) => {
           setLoc(JSON.parse(result));
+          if (input == "") {
+            setChosenLoc(null);
+          }
         })
-        .catch((error) => setLoc([{ display_name: "ERROR" }]));
+        .catch((error) => setLoc([]));
     }, 500);
     return () => clearTimeout(delayDebounceFn);
   }, [input]);
@@ -58,14 +61,15 @@ const HomeScreen = () => {
           value={input}
           placeholder="Where from?"
         />
-        {loc.map((item) => {
+        {loc.map((item, index) => {
           return (
             <TouchableOpacity
               onPress={() => {
-                setLoc([]);
                 setInput(item.display_name);
                 setChosenLoc(item);
+                setLoc([]);
               }}
+              key={index}
             >
               <View
                 style={{
@@ -85,51 +89,8 @@ const HomeScreen = () => {
           );
         })}
 
-        {/*
-        <Text style={{ fontSize: 25 }}>Where From?</Text>
-        <View style={styles.label}>
-          <Text>Latitude</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={(value) => {
-              setLat(value);
-            }}
-            value={lat.toString()}
-          />
-        </View>
-        <View style={styles.label}>
-          <Text>Longitude</Text>
-          <TextInput
-            style={styles.input}
-            onChangeText={(value) => {
-              setLng(value);
-            }}
-            value={lng.toString()}
-          />
-          </View>*/}
-
-        {/*<GooglePlacesAutocomplete
-          placeholder="Where From?"
-          styles={{ container: { flex: 0 }, textInput: { fontSize: 18 } }}
-          onPress={(data, details = null) => {
-            dispatch(
-              setOrigin({
-                location: details.geometry.location,
-                description: data.description,
-              })
-            );
-            dispatch(setDestination(null));
-          }}
-          fetchDetails={true}
-          returnKeyType={"search"}
-          enablePoweredByContainer={false}
-          minLength={2}
-          query={{ key: GOOGLE_MAPS_APIKEY, language: "en" }}
-          nearbyPlacesAPI="GooglePlacesSearch"
-          debounce={400}
-        />*/}
-
         <NavOptions loc={chosenLoc} />
+        <NavFavorites />
       </View>
     </SafeAreaView>
   );

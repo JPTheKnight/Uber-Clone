@@ -10,9 +10,7 @@ const MapScreen = () => {
   const Stack = createStackNavigator();
   return (
     <View>
-      <View style={tw`h-1/2`}>
-        <Map />
-      </View>
+      <View style={tw`h-1/2`}>{/*<Map />*/}</View>
       <View style={tw`h-1/2`}>
         <Stack.Navigator>
           <Stack.Screen
