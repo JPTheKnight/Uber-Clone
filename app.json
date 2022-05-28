@@ -19,7 +19,6 @@
       "supportsTablet": true
     },
     "android": {
-      "package": "jpcompany.uberclone",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
